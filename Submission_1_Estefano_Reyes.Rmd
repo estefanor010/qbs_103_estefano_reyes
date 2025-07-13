@@ -1,0 +1,92 @@
+• Present your scatterplot in class. Be prepared to explain the gene and covariate you
+chose and comment on the distribution as if you were presenting your research findings.
+No slides are required, just bring your plot. In class, be prepared to provide constructive
+feedback for your classmates (5 pts)
+
+```{r}
+#chosen covariates and gene
+#Gene: A2M
+#Continuous covariate: sofa
+#Categorical covariates: sex, ICU
+
+library(tidyverse)
+
+#import gene csv 
+gene_data <- read.csv(file = "QBS103_GSE157103_genes.csv",row.names=1)
+head(gene_data)
+
+#import covariate csv 
+covariate_data <- read.csv(file = "QBS103_GSE157103_series_matrix-1.csv",row.names=1)
+
+```
+
+
+```{r}
+
+#extract gene and covariates 
+
+#A2Mxpatients
+A2M_gene_temp <- gene_data['A2M',]
+#patientsx A2M
+A2M_gene <- t(A2M_gene_temp) 
+
+#print(A2M_gene)
+
+#all three patients x covariate
+sex <- covariate_data[,'sex']
+ICU <-covariate_data[,'icu_status']
+
+#since some observations are "unknonw" the vector will be parsed as character and thus we transform to numeric
+sofa <-as.numeric(covariate_data[,'sofa'])
+
+#linked as a data frame
+gene_covariate_data <- data.frame(A2M_gene,sex,ICU,sofa)
+colnames(gene_covariate_data)<- c('A2M', 'SEX','ICU','SOFA')
+head(gene_covariate_data)
+```
+```{r}
+#define a theme (used lecture material and adapted)
+simple_theme <- theme(
+  # eliminates lines from the grid and also the border lines
+  panel.border = element_blank(), panel.grid.major = element_blank(),panel.grid.minor = element_blank(), 
+  # Set axis colors and size 
+  axis.line = element_line(colour = "black", linewidth = rel(2)),
+  #background colors 
+  plot.background = element_rect(fill = "white"),
+  panel.background = element_blank(),
+  legend.key = element_rect(fill = 'white'), 
+  legend.background = element_rect(fill = 'white'),
+  # fot size 
+  text = element_text(face="bold",colour = "black"),
+  axis.text = element_text(face="bold",colour = "black"),
+        legend.position = 'top')
+```
+
+
+```{r}
+#Histogram for gene expression (5 pts)
+#I check online how to use a histogram in ggplot and their documentation website said "geom_histogram"
+ggplot(gene_covariate_data,aes(x = A2M)) +
+  geom_histogram(fill='blue',color = 'white') +
+  labs() +
+  labs(x = "Transcripts per Million (TPM)",y = "Frequency", title = "A2M Gene Expression Histogram of Sample Individuals") +
+  simple_theme
+```
+
+
+
+```{r}
+# Scatterplot for gene expression and continuous covariate (5 pts)
+ggplot(gene_covariate_data, aes(x=A2M,y=sofa))+
+  geom_point()+
+  labs(x = "Transcripts per Million (TPM)", y=  "SOFA (0-24)", title="A2M gene vs Sequential Organ Failure Assessment (SOFA) Score")+
+  simple_theme
+```
+
+```{r}
+#Boxplot of gene expression separated by both categorical covariates (5 pts)
+ggplot(gene_covariate_data,aes(x = ICU,y = A2M,color = sex)) +
+  geom_boxplot()+
+  labs(x='Intensive Care Unit (ICU)',y='Transcripts per Million (TPM)',title = 'Distribution of A2M Gene Expression Based on ICU and Biological Sex')+
+  simple_theme
+```
