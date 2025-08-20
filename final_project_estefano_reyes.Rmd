@@ -1,0 +1,305 @@
+---
+title: "final_project_estefano_reyes"
+output: pdf_document
+date: "2025-08-19"
+---
+
+Generate a table formatted in LaTeX of summary statistics for all the covariates you looked at and 2 additional continuous (3 total) and 1 additional categorical variable (3 total). (5 pts)
+
+Stratifying by one of your categorical variables
+Tables should report n (%) for categorical variables
+Tables should report mean (sd) or median [IQR] for continuous variables
+
+
+```{r}
+library(knitr)
+library(kableExtra)
+library(webshot2)
+library(tidyverse)
+#install.packages('pheatmap')
+library(pheatmap)
+```
+
+```{r}
+#citation("knitr")
+#citation("kableExtra")
+#citation("webshot2")
+#citation("tidyverse")
+#citation("pheatmap")
+```
+
+```{r}
+
+#import gene csv 
+gene_data <- read.csv(file = "QBS103_GSE157103_genes.csv",row.names=1)
+head(gene_data)
+
+#import covariate csv 
+covariate_data <- read.csv(file = "QBS103_GSE157103_series_matrix-1.csv",row.names=1)
+
+```
+
+
+```{r}
+
+#extract gene and covariates 
+
+#A2Mxpatients 
+A2M_gene_temp <- gene_data['A2M',]
+#patientsx A2M
+A2M_gene <- t(A2M_gene_temp) 
+
+#print(A2M_gene)
+
+#categorical data 
+SEX <- covariate_data[,'sex']
+ICU <-covariate_data[,'icu_status']
+MechVentilation<-covariate_data[,'mechanical_ventilation']
+  
+  
+#continous data 
+AGE <-covariate_data[,'age']
+FIBRINOGEN <- covariate_data[,'fibrinogen']
+SOFA <-as.numeric(covariate_data[,'sofa'])
+
+#linked as a data frame
+gene_covariate_data <- data.frame(A2M_gene,SEX,ICU,SOFA,AGE,FIBRINOGEN,MechVentilation)
+colnames(gene_covariate_data)<- c('A2M', 'SEX','ICU','SOFA','AGE','FIBRINOGEN','MechVentilation')
+
+gene_covariate_data_new <- gene_covariate_data[gene_covariate_data$SEX!=' unknown', ]
+
+head(gene_covariate_data_new)
+```
+
+
+```{r}
+#mechanical ventilation amount yes stratification and the cont/categorical variables 
+mechanical_vent_yes<-length(gene_covariate_data[gene_covariate_data['MechVentilation']=='yes'])
+mechanical_vent_no<- length(gene_covariate_data[gene_covariate_data['MechVentilation']=='no'])
+
+#stratity by yes on mechanical ventilation 
+gene_covariate_data$MechVentilation <- trimws(gene_covariate_data$MechVentilation)
+gene_covariate_data_mech_vent_yes <- subset(gene_covariate_data, MechVentilation == "yes")
+
+
+gene_covariate_data_mech_vent_yes$AGE[gene_covariate_data_mech_vent_yes$AGE == ":"] <- NA
+gene_covariate_data_mech_vent_yes$AGE[gene_covariate_data_mech_vent_yes$AGE == " >89"] <- NA
+gene_covariate_data_mech_vent_yes <- gene_covariate_data_mech_vent_yes[gene_covariate_data_mech_vent_yes$FIBRINOGEN!='unknown', ]
+
+#continuous data 
+age_mean_yes<- mean(as.numeric(gene_covariate_data_mech_vent_yes[['AGE']]),na.rm=TRUE)
+age_sd_yes  <- sd(gene_covariate_data_mech_vent_yes[['AGE']],na.rm=TRUE)
+age_yes  <- paste0(round(age_mean_yes,digits=2),"(",round(age_sd_yes,digits=2),")")
+
+fibrinogen_mean_yes<- mean(as.numeric(gene_covariate_data_mech_vent_yes[['FIBRINOGEN']]),na.rm=TRUE)
+fibrinogen_sd_yes  <- sd(gene_covariate_data_mech_vent_yes[['FIBRINOGEN']],na.rm=TRUE)
+fibrinogen_yes <- paste0(round(fibrinogen_mean_yes,digits=2),"(",round(fibrinogen_sd_yes,digits=2),")")
+
+sofa_mean_yes <- mean(as.numeric(gene_covariate_data_mech_vent_yes[['SOFA']]),na.rm=TRUE)
+sofa_sd_yes <- sd(gene_covariate_data_mech_vent_yes[['SOFA']],na.rm=TRUE)
+sofa_yes <- paste0(round(sofa_mean_yes,digits=2),"(", round(sofa_sd_yes,digits=2), ")")
+
+#categorical 
+icu_n_yes <- c(table(gene_covariate_data_mech_vent_yes$ICU))
+icu_yes_yes  <- paste0(icu_n_yes[" yes"],"(", round(100*icu_n_yes[" yes"]/sum(icu_n_yes),digits=2),")")
+icu_no_yes   <- paste0(icu_n_yes[" no"],"(", round(100*icu_n_yes[" no"]/sum(icu_n_yes),digits=2),")")
+
+sex_n_yes <- c(table(gene_covariate_data_mech_vent_yes$SEX))
+sex_male_yes  <- paste0(sex_n_yes[" male"],"(", round(100*sex_n_yes[" male"]/sum(sex_n_yes),digits=2),")")
+sex_female_yes   <- paste0(sex_n_yes[" female"],"(", round(100*sex_n_yes[" female"]/sum(sex_n_yes),digits=2),")")
+```
+
+
+
+```{r}
+#mechanical ventilation amount no stratification and the cont/categorical variables 
+gene_covariate_data_mech_vent_no <- subset(gene_covariate_data, MechVentilation == "no")
+
+gene_covariate_data_mech_vent_no$AGE[gene_covariate_data_mech_vent_no$AGE == ":"] <- NA
+gene_covariate_data_mech_vent_no$AGE[gene_covariate_data_mech_vent_no$AGE == " >89"] <- NA
+gene_covariate_data_mech_vent_no <- gene_covariate_data_mech_vent_no[gene_covariate_data_mech_vent_no$FIBRINOGEN!='unknown', ]
+
+#continuous data 
+age_mean_no<- mean(as.numeric(gene_covariate_data_mech_vent_no[['AGE']]),na.rm=TRUE)
+age_sd_no  <- sd(gene_covariate_data_mech_vent_no[['AGE']],na.rm=TRUE)
+age_no     <- paste0(round(age_mean_no,digits=2),"(", round(age_sd_no,digits=2),")")
+
+fibrinogen_mean_no<- mean(as.numeric(gene_covariate_data_mech_vent_no[['FIBRINOGEN']]),na.rm=TRUE)
+fibrinogen_sd_no  <- sd(gene_covariate_data_mech_vent_no[['FIBRINOGEN']],na.rm=TRUE)
+fibrinogen_no  <- paste0(round(fibrinogen_mean_no,digits=2),"(",round(fibrinogen_sd_no,digits=2),")")
+
+sofa_mean_no <- mean(as.numeric(gene_covariate_data_mech_vent_no[['SOFA']]),na.rm=TRUE)
+sofa_sd_no <- sd(gene_covariate_data_mech_vent_no[['SOFA']],na.rm=TRUE)
+sofa_no  <- paste0(round(sofa_mean_no,digits=2), "(", round(sofa_sd_no,digits=2),")")
+
+#categorical 
+icu_n_no <- c(table(gene_covariate_data_mech_vent_no$ICU))
+icu_yes_no  <- paste0(icu_n_no[" yes"],"(", round(100*icu_n_no[" yes"]/sum(icu_n_no),digits=2),")")
+icu_no_no   <- paste0(icu_n_no[" no"],"(", round(100*icu_n_no[" no"]/sum(icu_n_no),digits=2),")")
+
+sex_n_no <- c(table(gene_covariate_data_mech_vent_no$SEX))
+sex_male_no  <- paste0(sex_n_no[" male"],"(", round(100*sex_n_no[" male"]/sum(sex_n_no),digits=2),")")
+sex_female_no   <- paste0(sex_n_no[" female"],"(", round(100*sex_n_no[" female"]/sum(sex_n_no),digits=2),")")
+```
+
+Generate a table formatted in LaTeX of summary statistics for all the covariates you looked at and 2 additional continuous (3 total) and 1 additional categorical variable (3 total). (5 pts)
+
+Stratifying by one of your categorical variables
+Tables should report n (%) for categorical variables
+Tables should report mean (sd) or median [IQR] for continuous variables
+
+```{r}
+#table 
+#stratify by mechanical ventilation 
+table1 <- data.frame('Variable' = c('Age mean (sd)', 
+                                    'FIBRINOGEN mean (sd)', 
+                                    'SOFA mean (sd)',
+                                    
+                                    'ICU n (%)',
+                                    "yes","no",
+                                    
+                                    'Sex n (%)',
+                                    "Female","Male"),
+                     
+                     "Value (MechVent Yes)" = c(age_yes,fibrinogen_yes,sofa_yes,'',icu_yes_yes,icu_no_yes,'',sex_female_yes,sex_male_yes),
+                     "Value (MechVent No)" = c(age_no,fibrinogen_no,sofa_no,'',icu_yes_no,icu_no_no,'',sex_female_no,sex_male_no))
+# Print table using kable
+
+table_one<-kable(x = table1, caption = 'Table 1',format = 'html',
+      col.names = c("Variable", paste0("Mech Ventilation: YES (n = ", mechanical_vent_yes,")"), paste0("Mech Ventilation: NO (n = ", mechanical_vent_no,")")),
+      align = c('l','r','r'),escape = FALSE, booktabs = TRUE) %>%
+   add_indent(positions = c(5,6,8,9))
+table_one
+save_kable(table_one, "table1.png",zoom=4)
+```
+
+table_one<-kable(x = table1, caption = 'Table 1',format = 'html',
+      col.names = c("Variable", paste0("Mech Ventilation: YES (n = ", mechanical_vent_yes,")"), paste0("Mech Ventilation: NO (n = ", mechanical_vent_no,")")),
+      align = c('l','r','r'),escape = TRUE) %>%
+   add_indent(positions = c(5,6,8,9)) %>%
+  kable_classic()
+
+
+```{r}
+#define a theme (used lecture material and adapted)
+simple_theme <- theme(
+  # eliminates lines from the grid and also the border lines
+  panel.border = element_blank(), panel.grid.major = element_blank(),panel.grid.minor = element_blank(), 
+  # Set axis colors and size 
+  axis.line = element_line(colour = "black", linewidth = rel(2)),
+  #background colors 
+  plot.background = element_rect(fill = "white"),
+  panel.background = element_blank(),
+  legend.key = element_rect(fill = 'white'), 
+  legend.background = element_rect(fill = 'white'),
+  # fot size 
+  text = element_text(face="bold",colour = "black"),
+  axis.text = element_text(face="bold",colour = "black"),
+        legend.position = 'top')
+```
+
+Generate final a publication quality  histogram, scatter plot, and boxplot from submission 1 (i.e. only for your first gene of interest)  (5 pts)
+
+
+```{r}
+#Histogram for gene expression (5 pts)
+#I check online how to use a histogram in ggplot and their documentation website said "geom_histogram"
+histogram_out<-ggplot(gene_covariate_data_new,aes(x = A2M)) +
+  geom_histogram(fill='blue',color = 'white') +
+  labs() +
+  labs(x = "Transcripts per Million (TPM)",y = "Frequency", title = "A2M Gene Expression Histogram of Sample Individuals") +
+  simple_theme
+
+histogram_out
+histogram_out<- ggsave("histogram.png",plot=histogram_out,width=10,height=10,dpi=400)
+
+```
+
+
+
+```{r}
+# Scatterplot for gene expression and continuous covariate (5 pts)
+scatter <-ggplot(gene_covariate_data_new, aes(x=A2M,y=SOFA))+
+  geom_point()+
+  
+  
+  labs(x = "Transcripts per Million (TPM)", y=  "SOFA (0-24)", title="A2M gene vs Sequential Organ Failure Assessment (SOFA) Score")+
+  simple_theme
+
+scatter
+scatter<- ggsave("scatter.png",plot=scatter,width=10,height=10,dpi=400)
+
+```
+
+```{r}
+#Boxplot of gene expression separated by both categorical covariates (5 pts)
+boxplot_here<-ggplot(gene_covariate_data_new,aes(x = ICU,y = A2M,color = SEX)) +
+  geom_boxplot()+
+  labs(x='Intensive Care Unit (ICU)',y='Transcripts per Million (TPM)',title = 'Distribution of A2M Gene Expression Based on ICU and Biological Sex')+
+  simple_theme
+
+
+boxplot_here
+boxplot_here<- ggsave("box_plot.png",plot=boxplot_here,width=10,height=10,dpi=400)
+
+```
+```
+
+Generate a heatmap (5 pts)
+Heatmap should include at least 10 genes
+Include tracking bars for the 2 categorical covariates in your boxplotT
+Heatmaps should include clustered rows and columns
+
+
+```{r}
+covariate_data_new <- covariate_data[covariate_data$sex != " unknown", ]
+covariate_data_new
+```
+
+
+```{r}
+#select the 10 genes 
+heatmap <- pheatmap(
+  gene_data[c(3,23,9,18,29,17,16,22,14,20,8,19,28),],
+  clustering_distance_cols = 'euclidean',
+  clustering_distance_rows = 'euclidean',
+  show_colnames = FALSE,
+  width = 10,
+  height = 10,
+  annotation_col = data.frame(
+  row.names = rownames(covariate_data_new),
+  SEX = covariate_data_new[, "sex"],
+  ICU = covariate_data_new[, "icu_status"]),
+  annotation_colors = list(
+  SEX = c(" male" = "gray", " female" = "black"),
+  ICU = c(" yes" = "gray", " no" = "black"))
+  )
+
+
+heatmap
+#fix the x labels
+heatmap<- ggsave('heatmap.png',plot=heatmap,width=10,height=10,dpi=350)  
+
+
+```
+
+
+Going through the documentation for ggplot2, generate a plot type that we did not previously discuss in class that describes your data in a new and unique way (5 pts) 
+
+```{r}
+
+new_plot<- ggplot(gene_covariate_data_new,aes(x=A2M,fill=ICU))+
+  geom_bar() + 
+  scale_x_log10()+
+  coord_polar()+
+  labs() +
+  labs(x = "A2M Transcripts per Million (TPM logscale)",y = "Frequency", title = "A2M Gene Expression Polar Coordinate Plot of Sample Individuals by ICU") +
+  theme_minimal()
+
+new_plot
+new_plot<- ggsave('new_plot.png',plot=new_plot,width=10,height=10,dpi=350)  
+
+
+```
+
+
