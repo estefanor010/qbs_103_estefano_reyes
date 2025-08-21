@@ -1,6 +1,8 @@
 ---
 title: "final_project_estefano_reyes"
-output: pdf_document
+output: 
+  pdf_document:
+          keep_tex: true
 date: "2025-08-19"
 ---
 
@@ -74,8 +76,8 @@ head(gene_covariate_data_new)
 
 ```{r}
 #mechanical ventilation amount yes stratification and the cont/categorical variables 
-mechanical_vent_yes<-length(gene_covariate_data[gene_covariate_data['MechVentilation']=='yes'])
-mechanical_vent_no<- length(gene_covariate_data[gene_covariate_data['MechVentilation']=='no'])
+mechanical_vent_yes<-length(gene_covariate_data[gene_covariate_data['MechVentilation']==' yes'])
+mechanical_vent_no<- length(gene_covariate_data[gene_covariate_data['MechVentilation']==' no'])
 
 #stratity by yes on mechanical ventilation 
 gene_covariate_data$MechVentilation <- trimws(gene_covariate_data$MechVentilation)
@@ -155,22 +157,22 @@ table1 <- data.frame('Variable' = c('Age mean (sd)',
                                     'FIBRINOGEN mean (sd)', 
                                     'SOFA mean (sd)',
                                     
-                                    'ICU n (%)',
+                                    'ICU n (\\%)',
                                     "yes","no",
                                     
-                                    'Sex n (%)',
+                                    'Sex n (\\%)',
                                     "Female","Male"),
                      
                      "Value (MechVent Yes)" = c(age_yes,fibrinogen_yes,sofa_yes,'',icu_yes_yes,icu_no_yes,'',sex_female_yes,sex_male_yes),
                      "Value (MechVent No)" = c(age_no,fibrinogen_no,sofa_no,'',icu_yes_no,icu_no_no,'',sex_female_no,sex_male_no))
 # Print table using kable
 
-table_one<-kable(x = table1, caption = 'Table 1',format = 'html',
+table_one<-kable(x = table1, caption = 'Table 1',format = 'latex',
       col.names = c("Variable", paste0("Mech Ventilation: YES (n = ", mechanical_vent_yes,")"), paste0("Mech Ventilation: NO (n = ", mechanical_vent_no,")")),
       align = c('l','r','r'),escape = FALSE, booktabs = TRUE) %>%
    add_indent(positions = c(5,6,8,9))
 table_one
-save_kable(table_one, "table1.png",zoom=4)
+#save_kable(table_one, "table1.png",zoom=4)
 ```
 
 table_one<-kable(x = table1, caption = 'Table 1',format = 'html',
@@ -253,7 +255,7 @@ Heatmaps should include clustered rows and columns
 
 ```{r}
 covariate_data_new <- covariate_data[covariate_data$sex != " unknown", ]
-covariate_data_new
+#covariate_data_new
 ```
 
 
